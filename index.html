@@ -1,0 +1,979 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}[hidden]{display:none!important}</style>
+<title>Lucy's Reading Detective</title>
+<style>
+:root{
+  --ground:#F1F6FB; --paper:#FFFFFF; --ink:#1D2B45; --muted:#56678A; --line:#D5DFEC;
+  --accent:#2F6FD6; --accent-ink:#FFFFFF; --accent-soft:#E3EDFC;
+  --hl:#FFE45C; --hl-ink:#1D2B45; --near:#C99A00;
+  --good:#17895C; --good-soft:#DDF4EA; --oops:#C9502D; --oops-soft:#FCE6DE;
+  --lock:#A9B6CB;
+  --shadow:0 2px 0 #D5DFEC;
+  --display:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --read:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#0F1726; --paper:#172238; --ink:#EAF0FA; --muted:#9FB0CC; --line:#2A3A57;
+    --accent:#7FA8F5; --accent-ink:#0F1726; --accent-soft:#1F3150; --near:#FFD84D;
+    --good:#3CC48D; --good-soft:#15352B; --oops:#FF8A66; --oops-soft:#3A2119;
+    --lock:#4A5B78; --shadow:0 2px 0 #0A101C;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0F1726; --paper:#172238; --ink:#EAF0FA; --muted:#9FB0CC; --line:#2A3A57;
+  --accent:#7FA8F5; --accent-ink:#0F1726; --accent-soft:#1F3150; --near:#FFD84D;
+  --good:#3CC48D; --good-soft:#15352B; --oops:#FF8A66; --oops-soft:#3A2119;
+  --lock:#4A5B78; --shadow:0 2px 0 #0A101C;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:var(--read);font-size:18px;line-height:1.55}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:16px;padding-block:20px 48px}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(30px,6vw,44px);font-weight:700}
+h2{font-size:clamp(24px,4.5vw,32px);font-weight:700}
+h3{font-size:20px;font-weight:700}
+p{margin:0}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+mark{background:var(--hl);color:var(--hl-ink);border-radius:4px;padding:0 3px}
+
+/* home */
+.top{display:flex;gap:16px;align-items:center;margin-block:8px 20px}
+.mag{flex:none;width:64px;height:64px}
+.top p{color:var(--muted);max-width:60ch;margin-top:6px}
+.trail{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.case{width:100%;display:grid;grid-template-columns:56px 1fr auto;gap:14px;align-items:center;text-align:left;
+  background:var(--paper);border:2px solid var(--line);border-radius:18px;padding:14px 16px;cursor:pointer;box-shadow:var(--shadow)}
+.case:hover:not([disabled]){border-color:var(--accent)}
+.case[disabled]{cursor:not-allowed;opacity:.62}
+.case .n{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:24px;
+  background:var(--accent-soft);color:var(--accent)}
+.case.solved .n{background:var(--good-soft);color:var(--good)}
+.case[disabled] .n{background:transparent;border:2px dashed var(--lock);color:var(--lock)}
+.case .t{font-family:var(--display);font-weight:700;font-size:21px}
+.stars{display:flex;gap:2px}
+.stars svg{width:24px;height:24px}
+.star-on{fill:#F5B400}
+.star-off{fill:none;stroke:var(--lock);stroke-width:1.6}
+
+.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* buttons */
+.btn{min-height:52px;padding:10px 22px;border-radius:999px;border:2px solid var(--accent);background:var(--accent);color:var(--accent-ink);
+  font-family:var(--display);font-weight:700;font-size:19px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.small{min-height:40px;font-size:15px;padding:6px 16px}
+.btn:hover{filter:brightness(1.06)}
+
+/* lesson frame */
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px}
+.back{background:none;border:none;color:var(--accent);font-family:var(--display);font-weight:700;font-size:17px;cursor:pointer;padding:6px 0}
+.steps{display:flex;gap:6px;flex-wrap:wrap}
+.steps span{font-size:14px;padding:4px 12px;border-radius:999px;border:1.5px solid var(--line);color:var(--muted)}
+.steps span.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.steps span.past{border-color:var(--good);color:var(--good)}
+.lhead{margin-bottom:18px}
+.sk{color:var(--muted);font-size:15px}
+.lhead .sk{margin-top:4px}
+
+.card{background:var(--paper);border:2px solid var(--line);border-radius:20px;padding:22px}
+.learn{display:grid;gap:16px;max-width:720px;font-size:20px}
+.learn .lead{font-size:22px}
+.lrow{display:flex;justify-content:flex-end}
+.habits{margin:0;padding-left:0;list-style:none;display:grid;gap:10px;counter-reset:h}
+.habits li{counter-increment:h;display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:start}
+.habits li::before{content:counter(h);width:40px;height:40px;border-radius:50%;background:var(--accent-soft);color:var(--accent);
+  display:grid;place-items:center;font-family:var(--display);font-weight:700}
+.ex{border:2px dashed var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:8px}
+.ex-l{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.tf{overflow-x:auto}
+.tf table{border-collapse:collapse;width:100%;min-width:420px;font-size:18px}
+.tf th,.tf td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+.tf th{font-size:14px;color:var(--muted);font-weight:700}
+.yes{color:var(--good);font-weight:700}
+.nope{color:var(--oops);font-weight:700}
+.tip{background:var(--accent-soft);border-radius:14px;padding:14px 16px}
+.duo{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.duo > div{border:2px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:4px}
+.duo .w{color:var(--muted);font-size:17px}
+.go{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px}
+
+/* question layout */
+.qa{display:grid;grid-template-columns:1.1fr 1fr;grid-template-areas:"passage question";gap:18px;align-items:start}
+.qa .passage{grid-area:passage}
+.qa .question{grid-area:question;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+@media (max-width:780px){
+  .qa{grid-template-columns:1fr;grid-template-areas:"question" "passage"}
+  .qa .question{position:static}
+}
+.passage{background:var(--paper);border:2px solid var(--line);border-radius:20px;padding:20px 22px;display:grid;gap:12px}
+.phead{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ptext{font-size:22px;line-height:1.75;display:grid;gap:14px}
+.pn{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line);
+  font-family:var(--display);font-size:14px;color:var(--muted);margin-right:6px;vertical-align:3px}
+.s{border-radius:6px;padding:1px 2px;-webkit-box-decoration-break:clone;box-decoration-break:clone;transition:background .2s}
+.s.tap{cursor:pointer;background:var(--accent-soft);box-shadow:inset 0 -2px 0 var(--accent)}
+.s.tap:hover{background:color-mix(in srgb,var(--hl) 55%,transparent);color:inherit}
+.s.sel{background:color-mix(in srgb,var(--hl) 70%,transparent);color:var(--hl-ink);outline:3px solid var(--accent);outline-offset:1px}
+.s.hl{background:var(--hl);color:var(--hl-ink);box-shadow:none}
+.s.near{background:color-mix(in srgb,var(--hl) 30%,transparent);box-shadow:inset 0 -2px 0 var(--near);cursor:default}
+.s.no{background:var(--oops-soft);box-shadow:inset 0 -2px 0 var(--oops);cursor:default}
+.confirm{display:flex;flex-wrap:wrap;gap:10px;align-items:center;position:sticky;bottom:calc(env(safe-area-inset-bottom,0px) + 8px);
+  background:var(--paper);border:2px solid var(--accent);border-radius:16px;padding:10px 12px}
+.listen{display:inline-flex;align-items:center;gap:6px;background:none;border:1.5px solid var(--line);border-radius:999px;padding:4px 12px;
+  font-size:14px;color:var(--muted);cursor:pointer;flex:none}
+.listen svg{width:16px;height:16px;fill:currentColor}
+.listen:hover{border-color:var(--accent);color:var(--accent)}
+
+.question{background:var(--paper);border:2px solid var(--accent);border-radius:20px;padding:20px 22px;display:grid;gap:14px}
+.qmeta{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;color:var(--muted);font-weight:700;letter-spacing:.03em}
+.dots{display:flex;gap:6px}
+.dots i{width:12px;height:12px;border-radius:50%;border:2px solid var(--line)}
+.dots i.cur{border-color:var(--accent)}
+.dots i.ok{background:var(--good);border-color:var(--good)}
+.dots i.miss{background:var(--oops);border-color:var(--oops)}
+.qtext{font-size:22px;font-weight:700;line-height:1.4}
+.qtext .concl{display:block;margin-top:6px;font-weight:400;background:var(--accent-soft);border-radius:10px;padding:8px 12px}
+.step{font-size:16px;font-weight:700;color:var(--accent)}
+.opts{display:grid;gap:10px}
+.opts.wait{opacity:.45}
+.opt{text-align:left;min-height:56px;padding:12px 16px;border-radius:14px;border:2px solid var(--line);background:var(--paper);cursor:pointer;font-size:19px;line-height:1.4}
+.opt:hover:not([disabled]){border-color:var(--accent)}
+.opt[disabled]{cursor:default}
+.opt.right{border-color:var(--good);background:var(--good-soft)}
+.opt.wrong{border-color:var(--oops);background:var(--oops-soft);text-decoration:line-through;text-decoration-color:var(--oops)}
+.chips{display:grid;gap:8px}
+.chip{text-align:left;min-height:52px;padding:10px 14px;border-radius:12px;border:2px solid var(--line);background:var(--paper);cursor:pointer;font-size:18px}
+.chip:hover:not([disabled]){border-color:var(--accent)}
+.chip[disabled]{opacity:.35;cursor:default}
+.slots{display:grid;gap:8px;counter-reset:sl}
+.slot{counter-increment:sl;display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:center;min-height:48px;padding:6px 12px;border-radius:12px;border:2px dashed var(--line);font-size:18px}
+.slot::before{content:counter(sl);width:30px;height:30px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:16px}
+.slot.full{border-style:solid;border-color:var(--accent)}
+.slot.right{border-color:var(--good);background:var(--good-soft)}
+.fb{border-radius:14px;padding:12px 14px;font-size:18px;display:grid;gap:8px}
+.fb .listen{justify-self:start}
+.fb.good{background:var(--good-soft);color:var(--ink);border:2px solid var(--good)}
+.fb.oops{background:var(--oops-soft);color:var(--ink);border:2px solid var(--oops)}
+.fb.info{background:var(--hl);color:var(--hl-ink)}
+.fb.info .listen{color:var(--hl-ink);border-color:color-mix(in srgb,var(--hl-ink) 30%,transparent)}
+.fb b{font-family:var(--display)}
+
+.center{display:grid;gap:16px;justify-items:start;max-width:640px}
+.big-stars{display:flex;gap:6px}
+.big-stars svg{width:48px;height:48px}
+.stat{font-size:20px}
+.stat .num{font-weight:700}
+@media (prefers-reduced-motion:no-preference){
+  .pop{animation:pop .35s ease-out}
+  @keyframes pop{from{transform:scale(.96);opacity:.4}to{transform:none;opacity:1}}
+}
+</style>
+
+<div class="wrap" id="app"></div>
+
+<script>
+/* Sentence indices are global across a passage's paragraphs, starting at 0. */
+const PASSAGES = {
+  /* case 1 */
+  mitten:{title:`The Lost Mitten`,paras:[[
+    `Maya had one red mitten on her left hand.`,
+    `Her right hand was cold and pink.`,
+    `"I must have dropped it on the way to the bus," she said.`,
+    `She walked back along the snowy sidewalk.`,
+    `Near the big oak tree, she saw something red poking out of the snow.`,
+    `Maya pulled it out and shook off the snow.`,
+    `It was her mitten!`,
+    `She put it on and smiled all the way home.`]]},
+  seeds:{title:`Sam's Seeds`,paras:[[
+    `Sam wanted to grow his own beans.`,
+    `He planted three bean seeds in a paper cup full of dirt.`,
+    `He put the cup on the kitchen window, where the sun shines every morning.`,
+    `Every day after school, he gave the seeds a little water.`],[
+    `For four days, nothing happened.`,
+    `Sam was worried that the seeds would never grow.`,
+    `Then, on the fifth day, a tiny green sprout pushed up out of the dirt.`,
+    `Sam shouted so loudly that his cat jumped off the table.`],[
+    `By the next week, the plant had two big leaves.`,
+    `Sam measured it with a ruler.`,
+    `It was four inches tall!`,
+    `"It is too big for this cup now," said Sam.`,
+    `"Next, I will plant it in the garden with Grandpa."`]]},
+  library:{title:`The Missing Library Book`,paras:[[
+    `Ella's library book was due on Friday.`,
+    `On Thursday night, she could not find it anywhere.`,
+    `She looked under her bed and behind the couch.`,
+    `She even looked in the bathtub!`],[
+    `"Think about where you read it last," said Mom.`,
+    `Ella closed her eyes and thought hard.`,
+    `She remembered reading about sharks in the car on the way to soccer.`,
+    `Ella and Mom ran out to the car with a flashlight.`,
+    `The book was under the back seat, next to a muddy soccer ball.`],[
+    `The next day, Ella gave the book back to Mr. Reed at the library.`,
+    `Then she checked out a new book about whales.`,
+    `This time, she made a special spot for it on her shelf.`]]},
+  /* case 2 */
+  kitchen:{title:`Grandma's Kitchen`,paras:[[
+    `Leo woke up and smelled something sweet.`,
+    `He ran into the kitchen.`,
+    `Grandma was wearing her flowery apron.`,
+    `There was flour on the table and on her nose.`,
+    `A timer on the oven was ticking.`,
+    `Leo's little dog, Pepper, sat by the door and wagged her tail.`,
+    `"Can I have one now?" Leo asked.`,
+    `"Not yet," Grandma laughed. "They are still too hot."`]]},
+  hamster:{title:`The Class Pet`,paras:[[
+    `Every Friday, one student in Ms. Lopez's class takes Nibbles the hamster home.`,
+    `This week, it was Ava's turn to take care of him.`,
+    `She checked her list of hamster supplies three times.`,
+    `At home, she gave Nibbles fresh water every morning and night.`,
+    `She built him a tunnel out of an empty paper towel roll.`,
+    `On Monday, Ava carried the cage very slowly so it would not shake.`,
+    `Ms. Lopez smiled. "Nibbles looks very happy," she said.`]]},
+  puppy:{title:`Grandpa's Surprise`,paras:[[
+    `On Saturday morning, Grandpa's truck pulled into the driveway.`,
+    `In the back was a big box with holes cut in the sides.`,
+    `The box wiggled, and Mia heard a tiny "yip!"`,
+    `Mia's little brother, Jack, ran and hid behind the couch.`],[
+    `Grandpa opened the box, and a puppy with floppy ears tumbled out.`,
+    `It ran straight to Mia and licked her hand.`,
+    `Mia laughed and gave it a big hug.`,
+    `Jack peeked out, but he did not come any closer.`,
+    `"Will it bite me?" he whispered.`],[
+    `"He is yours to keep," Grandpa said, "but you have to take care of him."`,
+    `Mia filled a bowl with water and set it by the door.`,
+    `She made a soft bed out of an old blanket.`,
+    `She even read a book about puppies so she would know what to do.`,
+    `That night, the puppy fell asleep curled up next to Mia's feet.`]]},
+  play:{title:`The Class Play`,paras:[[
+    `Today was the day of the class play.`,
+    `Ruby was going to be the queen.`,
+    `All week, she practiced her lines in front of the mirror.`,
+    `She even practiced while she brushed her teeth.`,
+    `By Friday, she knew every word by heart.`],[
+    `Before the play, Ruby peeked out from behind the curtain.`,
+    `The room was full of parents holding phones and cameras.`,
+    `Her hands felt cold, and her knees were shaking.`,
+    `Her friend Max squeezed her hand and said, "You will be great."`],[
+    `When the curtain opened, Ruby said her first line in a loud, clear voice.`,
+    `Soon her knees stopped shaking.`,
+    `At the end, everyone stood up and clapped for a long time.`,
+    `Ruby's dad clapped the loudest of all.`]]},
+  /* case 3 */
+  kite:{title:`The Kite Contest`,paras:[[
+    `Jada wanted to win the kite contest at the park.`,
+    `First, she built a kite out of paper, sticks, and string.`,
+    `When she tried to fly it, the kite crashed into a bush and tore.`,
+    `Jada felt like giving up.`,
+    `Then her brother helped her tape the hole and add a longer tail.`,
+    `On the day of the contest, the wind was strong.`,
+    `Jada's kite flew higher than all the others.`,
+    `She won a blue ribbon and hung it on her wall.`]]},
+  sandcastle:{title:`The Sandcastle Contest`,paras:[[
+    `Every summer, the town has a sandcastle contest at the beach.`,
+    `This year, Omar and his sister Lina wanted to win.`,
+    `They worked all morning to build a castle with four tall towers.`],[
+    `Just as they finished, a big wave rushed up the beach.`,
+    `It knocked down two of the towers!`,
+    `Lina wanted to quit, but Omar had an idea.`,
+    `"Let's build a wall of sand to keep the waves away," he said.`,
+    `They dug a deep ditch and piled the sand into a thick wall.`,
+    `Then they fixed the towers and added shells for windows.`],[
+    `When the judges came, the wall was still standing.`,
+    `The judges gave Omar and Lina the prize for the smartest castle.`,
+    `On the way home, Lina said, "I'm glad we didn't give up."`]]},
+  lemonade:{title:`Nia's Lemonade Stand`,paras:[[
+    `Nia wanted to buy a new book about space.`,
+    `The book cost ten dollars, but she only had two.`,
+    `So she set up a lemonade stand in front of her house.`],[
+    `At first, nobody stopped.`,
+    `Cars zoomed by, and people walked past without looking.`,
+    `Nia felt like giving up.`,
+    `Then her neighbor, Mr. Diaz, gave her an idea.`,
+    `"Make a big, bright sign," he said, "so people can see you."`,
+    `Nia painted a sign with a yellow lemon and the words "Cold Lemonade!"`],[
+    `Soon, people began to stop.`,
+    `By the end of the day, Nia had sold twenty cups.`,
+    `The next morning, she walked to the store and bought her space book.`]]},
+  /* case 4 */
+  penguins:{title:`Penguins`,paras:[[
+    `Penguins are birds that are built for cold water.`,
+    `Their thick feathers keep them warm and dry.`,
+    `A layer of fat under their skin keeps the cold out.`,
+    `Their wings work like flippers to help them swim fast.`]]},
+  recess:{title:`Recess`,paras:[[
+    `At recess, some kids race each other across the field.`,
+    `Others climb to the top of the jungle gym.`,
+    `A group jumps rope by the fence.`,
+    `A few friends play tag near the swings.`]]},
+  honey:{title:`How Honey Is Made`,paras:[[
+    `Honey starts with flowers.`,
+    `First, a honeybee visits many flowers. It drinks a sweet juice called nectar.`,
+    `The bee keeps the nectar in a special honey stomach and flies back to the hive.`,
+    `Next, the bee passes the nectar to another bee inside the hive.`,
+    `The bees spread the nectar into tiny wax rooms called cells.`,
+    `Then the bees fan their wings to dry the nectar until it turns thick and sticky.`,
+    `Finally, they cover each cell with a wax lid.`,
+    `Now the honey is ready, and it can stay good for a very long time.`]]},
+  beavers:{title:`Busy Beavers`,paras:[[
+    `Beavers are amazing builders.`,
+    `They cut down trees with their strong front teeth.`,
+    `Then they pile up sticks, rocks, and mud to make a dam across a stream.`,
+    `The dam holds back the water and makes a quiet pond.`],[
+    `Beavers are also made for swimming.`,
+    `Their back feet are webbed like a duck's feet.`,
+    `Their flat tail helps them steer in the water.`,
+    `They can stay underwater for up to fifteen minutes.`],[
+    `In the pond, beavers build a home called a lodge.`,
+    `The door to the lodge is underwater, so enemies like wolves cannot get in.`,
+    `Inside, there is a dry room where the whole family sleeps.`,
+    `In winter, they stay in the lodge and eat bark from branches they saved.`]]},
+  camels:{title:`Desert Camels`,paras:[[
+    `Camels are built for life in the hot, dry desert.`,
+    `Their long, thick eyelashes keep blowing sand out of their eyes.`,
+    `They can close their noses to keep sand out, too.`,
+    `Their wide, flat feet help them walk on soft sand without sinking.`],[
+    `Camels can go a long time without food or water.`,
+    `When they find water, they can drink a huge amount very fast.`,
+    `Their humps store fat, not water.`,
+    `The fat gives them energy when there is no food around.`],[
+    `Camels carry heavy bags and people across the desert.`,
+    `Some families drink camel milk every day.`,
+    `Others use soft camel hair to make warm blankets.`]]},
+  /* case 5 */
+  spelling:{title:`The Spelling Bee`,paras:[[
+    `Nora's hands were shaking as she walked up on the stage.`,
+    `Her voice was very quiet when she said, "Hello."`,
+    `The first word was "because."`,
+    `Nora closed her eyes and spelled it slowly.`,
+    `"Correct!" said the judge.`,
+    `Nora's face lit up with a big smile.`,
+    `After the contest, she saw a boy crying because he missed a word.`,
+    `Nora sat next to him and said, "You did great. We can practice together for next time."`]]},
+  garden:{title:`Mr. Finn's Garden`,paras:[[
+    `Mr. Finn lives next door to Theo.`,
+    `Every morning, even when it rains, he goes out to pull weeds in his garden.`,
+    `His tomatoes are the biggest on the whole street.`],[
+    `One day, Theo hit a baseball over the fence.`,
+    `It smashed one of Mr. Finn's tomato plants.`,
+    `Theo could have run away, but he walked next door, red in the face.`,
+    `"I am so sorry," he said. "I hit that ball."`],[
+    `Mr. Finn frowned at the broken plant for a long time.`,
+    `Then he patted Theo's shoulder. "Thank you for telling me the truth," he said.`,
+    `"Will you help me plant a new one?"`,
+    `Theo nodded, and they dug in the dirt together all afternoon.`]]},
+  newkid:{title:`The New Kid`,paras:[[
+    `On the first day of school, a new girl named Priya stood by the door.`,
+    `She held her backpack straps tightly and looked down at the floor.`,
+    `At lunch, she sat all by herself.`],[
+    `Carlos saw Priya sitting alone.`,
+    `He picked up his tray and walked over to her table.`,
+    `"Do you want to play tag at recess?" he asked.`,
+    `Priya looked up and gave a small smile.`],[
+    `At recess, Priya was the fastest runner in the whole class.`,
+    `Nobody could tag her!`,
+    `She laughed and waved Carlos over to her team.`,
+    `By the end of the week, Priya had lots of new friends.`]]}
+};
+
+const HELPER = `That's true, but it fits only one sentence. It's a helper, not the boss.`;
+const SMALL = `It's a small detail, not the problem, the fix, or the ending.`;
+
+/* point:true = in practice, she taps the proof sentence first, then the answer choices open. */
+const LESSONS = [
+{
+  id:`habits`, title:`Detective Habits`, skill:`Works in every MobyMax reading lesson`,
+  after:`Use the three habits in your next MobyMax lesson. In MobyMax, point with your finger!`,
+  learnSay:`Good detectives don't guess. They use three quick habits. One: Peek at the question first. Now you know what to look for. Two: Read the whole story. Keep your finger under the words. Three: Point to the proof. Find the sentence that shows the answer. Then choose. Try it. Question: What color is the cat? Tom has a cat named Sox. Sox is orange with white paws. She sleeps all day. The sentence "Sox is orange with white paws" is the proof. The answer is orange.`,
+  learn:`
+    <p class="lead">Good detectives don't guess. They use three quick habits.</p>
+    <ol class="habits">
+      <li><span><b>Peek</b> at the question first. Now you know what to look for.</span></li>
+      <li><span><b>Read</b> the whole story. Keep your finger under the words.</span></li>
+      <li><span><b>Point</b> to the proof. Find the sentence that shows the answer. Then choose.</span></li>
+    </ol>
+    <div class="ex"><div class="ex-l">Try it</div>
+      <p>Question: <i>What color is the cat?</i></p>
+      <p>Tom has a cat named Sox. <mark>Sox is orange with white paws.</mark> She sleeps all day.</p>
+      <p>The yellow sentence is the proof. The answer is <b>orange</b>.</p></div>`,
+  guided:[
+    {type:`mc`,p:`mitten`,q:`Where did Maya find her mitten?`,opts:[`Next to the bus stop`,`Near the big oak tree`,`Inside her coat pocket`],ans:1,proof:[4],point:true,
+      hint:`Look back. Find the sentence where Maya sees something red.`},
+    {type:`mc`,p:`mitten`,q:`How did Maya's right hand feel before she found the mitten?`,opts:[`Cold`,`Wet`,`Snowy`],ans:0,proof:[1],point:true,
+      hint:`Look back near the start. What does it say about her right hand?`},
+    {type:`mc`,p:`mitten`,q:`How did Maya feel at the end?`,opts:[`Worried`,`Cold`,`Happy`],ans:2,proof:[6,7],point:true,
+      hint:`Look at the very last sentence. What did Maya's face do?`}
+  ],
+  checks:[[
+    {type:`mc`,p:`seeds`,q:`How many seeds did Sam plant?`,opts:[`Two`,`Three`,`Four`],ans:1,proof:[1],hint:`Find the sentence where Sam plants the seeds.`},
+    {type:`mc`,p:`seeds`,q:`Why did Sam put the cup on the window?`,opts:[`So the seeds could get sun`,`So his cat could not reach it`,`So Grandpa could see it`],ans:0,proof:[2],hint:`Find the sentence about the window. What shines there every morning?`},
+    {type:`mc`,p:`seeds`,q:`How did Sam feel when nothing happened for four days?`,opts:[`Excited`,`Worried`,`Proud`],ans:1,proof:[5],hint:`Find the part about the four days. Read the next sentence.`},
+    {type:`mc`,p:`seeds`,q:`How tall was the plant when Sam measured it?`,opts:[`Two inches`,`Four inches`,`Five inches`],ans:1,proof:[10],hint:`Find the word "ruler." Read the sentence right after it.`},
+    {type:`mc`,p:`seeds`,q:`What will Sam do next with the plant?`,opts:[`Plant it in the garden`,`Move it to a bigger cup`,`Put it back on the window`],ans:0,proof:[12],hint:`Find the word "Next" in the story.`}
+  ],[
+    {type:`mc`,p:`library`,q:`When was Ella's library book due?`,opts:[`Thursday`,`Friday`,`Saturday`],ans:1,proof:[0],hint:`Look at the very first sentence.`},
+    {type:`mc`,p:`library`,q:`What was the lost book about?`,opts:[`Whales`,`Sharks`,`Soccer`],ans:1,proof:[6],hint:`Find the sentence where Ella remembers reading the book.`},
+    {type:`mc`,p:`library`,q:`Where did Ella find the book?`,opts:[`Under her bed`,`In the car`,`Behind the couch`],ans:1,proof:[8],hint:`Find the sentence that starts "The book was..."`},
+    {type:`mc`,p:`library`,q:`Who helped Ella remember where the book was?`,opts:[`Mom`,`Mr. Reed`,`Her coach`],ans:0,proof:[4],hint:`Who told Ella to think about where she read it last?`},
+    {type:`mc`,p:`library`,q:`Why did Ella make a special spot on her shelf?`,opts:[`So she would not lose her new book`,`So she could read about whales`,`So her room would look nice and neat`],ans:0,proof:[1,11],hint:`Think about what went wrong with her first book. How would a special spot help?`}
+  ]]
+},
+{
+  id:`prove`, title:`Prove It!`, skill:`MobyMax: Support conclusions with details from the text`,
+  after:`Now try it in MobyMax: Support conclusions with details from the text. For each choice, ask: does it prove it BEST?`,
+  learnSay:`Sometimes a story does not tell you something. You figure it out. That is a conclusion. The proof is the sentence that shows it best. Watch me. Ben put on his raincoat. His dog slept on the rug. Ben grabbed his umbrella. Conclusion: it is rainy outside. Ben put on his raincoat. Is it in the story? Yes. Does it prove rain? Yes. His dog slept on the rug. In the story? Yes. Proves rain? No. Ben grabbed his umbrella. In the story? Yes. Proves rain? Yes. The big trick: wrong answers can be real sentences from the story too. Being in the story is not enough. Pick the sentence that proves it best.`,
+  learn:`
+    <p class="lead">Sometimes a story does not tell you something. You figure it out. That is a <b>conclusion</b>. The <b>proof</b> is the sentence that shows it best.</p>
+    <div class="ex"><div class="ex-l">Watch me</div>
+      <p>Ben put on his raincoat. His dog slept on the rug. Ben grabbed his umbrella.</p>
+      <p>Conclusion: <b>It is rainy outside.</b></p>
+      <div class="tf"><table>
+        <thead><tr><th>Sentence</th><th>In the story?</th><th>Proves rain?</th></tr></thead>
+        <tbody>
+          <tr><td>Ben put on his raincoat.</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+          <tr><td>His dog slept on the rug.</td><td class="yes">Yes</td><td class="nope">No</td></tr>
+          <tr><td>Ben grabbed his umbrella.</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+        </tbody></table></div></div>
+    <div class="tip"><b>The big trick:</b> Wrong answers can be real sentences from the story too. Being in the story is not enough. Pick the sentence that proves it <b>BEST</b>.</div>`,
+  guided:[
+    {type:`tap`,p:`kitchen`,q:`Grandma is baking something.`,concl:true,ask:`Tap a sentence that proves it.`,ans:[3,4,7],proof:[3,4,7],
+      near:{0:`That's a small clue! But a sweet smell could be candy or flowers. Find a sentence that proves it even better.`,
+            2:`That's a small clue! People wear aprons for lots of jobs. Find a sentence that proves it even better.`,
+            6:`That's a small clue! Leo wants something. Find a sentence that proves Grandma is baking even better.`},
+      hint:`That sentence is true, but it isn't about cooking. Find a clue about baking.`},
+    {type:`mc`,p:`kitchen`,q:`The food is not ready to eat yet.`,concl:true,ask:`Which sentence proves it BEST?`,
+      opts:[`He ran into the kitchen.`,`"They are still too hot."`,`Grandma was wearing her flowery apron.`],ans:1,proof:[7],
+      hint:`All three are in the story. Which one shows the food isn't ready?`,
+      why:`All three are in the story, but only "still too hot" proves the food isn't ready.`},
+    {type:`mc`,p:`hamster`,q:`Ava wanted Nibbles to have fun.`,concl:true,ask:`Which sentence proves it BEST?`,
+      opts:[`She built him a tunnel out of an empty paper towel roll.`,`She checked her list of hamster supplies three times.`,`At home, she gave Nibbles fresh water every morning and night.`],ans:0,proof:[4],
+      hint:`All three are true. Which one is about something fun to play in?`,
+      optHints:{1:`That's true, and it shows Ava is careful. But does it prove she wanted Nibbles to have FUN?`,
+                2:`That's true, and it shows Ava takes care of Nibbles. But is water about FUN?`}},
+    {type:`tap`,p:`hamster`,q:`Ava did not want Nibbles to get hurt.`,concl:true,ask:`Tap the sentence that proves it.`,ans:[5],proof:[5],
+      near:{3:`That shows Ava took care of Nibbles. Now find the part about keeping him safe on the trip.`},
+      hint:`That sentence is true, but does it show Ava keeping Nibbles from getting hurt?`}
+  ],
+  checks:[[
+    {type:`mc`,p:`puppy`,q:`Jack is afraid of the puppy.`,concl:true,ask:`Which sentence proves it BEST?`,
+      opts:[`"Will it bite me?" he whispered.`,`It ran straight to Mia and licked her hand.`,`Mia laughed and gave it a big hug.`],ans:0,proof:[3,7,8],
+      hint:`Look for what Jack says or does.`,optHints:{2:`That's about Mia, not Jack. What does Jack say or do?`},
+      why:`Jack asks if it will bite. Hiding and staying back prove it too!`},
+    {type:`mc`,p:`puppy`,q:`The puppy likes Mia.`,concl:true,ask:`Which sentence proves it BEST?`,
+      opts:[`It ran straight to Mia and licked her hand.`,`Mia filled a bowl with water and set it by the door.`,`In the back was a big box with holes cut in the sides.`],ans:0,proof:[5,13],
+      hint:`Look for something the PUPPY does.`},
+    {type:`tap`,p:`puppy`,q:`Mia wants to take good care of the puppy.`,concl:true,ask:`Tap a sentence that proves it.`,ans:[10,11,12],proof:[10,11,12],
+      near:{6:`That shows Mia loves the puppy. Find something she does to take care of it.`,
+            9:`That's what Grandpa SAID. Find something Mia DID.`},
+      hint:`That sentence is true, but is it about Mia taking care of the puppy?`},
+    {type:`mc`,p:`puppy`,q:`Read this sentence: "The box wiggled, and Mia heard a tiny 'yip!'"`,ask:`What does it help you figure out?`,
+      opts:[`There is an animal in the box.`,`Jack is scared of the big box.`,`The box is full of new toys.`],ans:0,proof:[2],
+      hint:`What could make a box wiggle and yip?`,
+      optHints:{1:`Jack IS scared, but does THIS sentence prove it? What does the yip tell you?`}},
+    {type:`mc`,p:`puppy`,q:`Mia will be a good puppy owner.`,concl:true,ask:`Which sentence proves it BEST?`,
+      opts:[`She even read a book about puppies so she would know what to do.`,`Grandpa opened the box, and a puppy with floppy ears tumbled out.`,`Jack peeked out, but he did not come any closer.`],ans:0,proof:[10,11,12],
+      hint:`Which sentence shows Mia getting ready to take care of the puppy?`}
+  ],[
+    {type:`mc`,p:`play`,q:`Ruby was nervous before the play.`,concl:true,ask:`Which sentence proves it BEST?`,
+      opts:[`Her hands felt cold, and her knees were shaking.`,`The room was full of parents holding phones and cameras.`,`Ruby was going to be the queen.`],ans:0,proof:[7],
+      hint:`Find a sentence that tells how Ruby's body felt.`,
+      optHints:{1:`A full room could MAKE someone nervous. But does it prove Ruby FELT nervous? Find a sentence about Ruby.`}},
+    {type:`mc`,p:`play`,q:`Ruby worked hard to get ready.`,concl:true,ask:`Which sentence proves it BEST?`,
+      opts:[`All week, she practiced her lines in front of the mirror.`,`Before the play, Ruby peeked out from behind the curtain.`,`Today was the day of the class play.`],ans:0,proof:[2,3,4],
+      hint:`Which sentence shows Ruby doing work before the play?`},
+    {type:`tap`,p:`play`,q:`Ruby's dad is proud of her.`,concl:true,ask:`Tap the sentence that proves it.`,ans:[12],proof:[12],
+      near:{11:`That shows everyone liked the play. Find a sentence about Ruby's dad.`},
+      hint:`That sentence is true, but is it about Ruby's dad?`},
+    {type:`mc`,p:`play`,q:`The play went well.`,concl:true,ask:`Which sentence proves it BEST?`,
+      opts:[`At the end, everyone stood up and clapped for a long time.`,`The room was full of parents holding phones and cameras.`,`Before the play, Ruby peeked out from behind the curtain.`],ans:0,proof:[9,11],
+      hint:`Which sentence tells what happened at the END of the play?`},
+    {type:`mc`,p:`play`,q:`Read this sentence: "Soon her knees stopped shaking."`,ask:`What does it help you figure out?`,
+      opts:[`Ruby stopped feeling nervous.`,`Ruby was getting very cold.`,`Ruby wanted to sit down.`],ans:0,proof:[7,10],
+      hint:`Look back. Why were Ruby's knees shaking before the play?`}
+  ]]
+},
+{
+  id:`order`, title:`Tell It in Order`, skill:`MobyMax: Recount a story`,
+  after:`Now try it in MobyMax: Recount a story. Look for the problem, the fix, the ending, and the lesson.`,
+  learnSay:`To recount a story means to tell what happened, in order. Only tell the big parts. Beginning: Who is in it? What goes wrong? Middle: What do they try? End: How does it get fixed? Many stories teach a lesson. Ask: what did the character learn? Watch me. Ana's dog ran away. She put up signs with his picture. She tied a red ribbon on her bike. A neighbor called to say the dog was in his yard. Ana ran over and hugged her dog. Retelling: Ana's dog ran away, so she put up signs. A neighbor saw one and called, and Ana got her dog back. The red ribbon is a tiny detail, so it stays out. Lesson: asking for help can solve a problem.`,
+  learn:`
+    <p class="lead">To <b>recount</b> a story means to tell what happened, in order. Only tell the big parts.</p>
+    <ol class="habits">
+      <li><span><b>Beginning:</b> Who is in it? What goes wrong?</span></li>
+      <li><span><b>Middle:</b> What do they try?</span></li>
+      <li><span><b>End:</b> How does it get fixed?</span></li>
+    </ol>
+    <p>Many stories also teach a <b>lesson</b>. Ask: What did the character learn?</p>
+    <div class="ex"><div class="ex-l">Watch me</div>
+      <p>Ana's dog ran away. She put up signs with his picture. She tied a red ribbon on her bike. A neighbor called to say the dog was in his yard. Ana ran over and hugged her dog.</p>
+      <p><b>Retelling:</b> Ana's dog ran away, so she put up signs. A neighbor saw one and called, and Ana got her dog back.</p>
+      <p>The red ribbon is a tiny detail, so it stays out.</p>
+      <p><b>Lesson:</b> Asking for help can solve a problem.</p></div>`,
+  guided:[
+    {type:`order`,p:`kite`,q:`Put what happened in order.`,items:[`Jada built a kite.`,`The kite crashed and tore.`,`Her brother helped her fix it.`,`Her kite flew highest and she won.`],proof:[1,2,4,6],
+      hint:`Look back. What did Jada do first? Then tap them again from the start.`},
+    {type:`mc`,p:`kite`,q:`What was Jada's problem?`,opts:[`Her kite crashed and tore.`,`The wind was too strong.`,`Her brother would not help.`],ans:0,proof:[2],point:true,
+      hint:`A problem is something that goes wrong. Find the sentence where something goes wrong for Jada.`},
+    {type:`mc`,p:`kite`,q:`Which part is NOT important to retell?`,opts:[`Her kite had paper, sticks, and string.`,`Her kite crashed into a bush and tore.`,`Her kite flew higher than all the others.`],ans:0,proof:[1],
+      hint:`Big parts are the problem, the fix, and the ending. Which one is a tiny detail?`,
+      optHints:{1:`The crash is the problem, so it's a big part!`,2:`That's how the story ends, so it's a big part!`}},
+    {type:`mc`,p:`kite`,q:`Which is the BEST retelling of the story?`,opts:[
+      `Jada built a kite, but it crashed and tore. Her brother helped her fix it. At the contest, it flew highest and she won.`,
+      `Jada's kite was made of paper, sticks, and string. It had a long tail. The wind was strong, and she hung a ribbon on her wall.`,
+      `Jada won a blue ribbon at the contest. Then she built a kite, and it crashed into a bush. Then her brother helped her fix it.`],ans:0,proof:[1,2,4,6],
+      hint:`Check each one. Does it tell the problem? Is it in the right order?`,
+      optHints:{1:`That one has tiny details, but it skips the problem: the crash!`,2:`That one has the big events, but the order is mixed up. What happened first?`},
+      why:`It has the big events (the problem, the fix, and the win) in the right order.`},
+    {type:`mc`,p:`kite`,q:`What lesson does Jada's story teach?`,opts:[`Keep trying when things go wrong.`,`Paper kites are the best kites.`,`Never fly a kite near a bush.`],ans:0,proof:[3,4,6],
+      hint:`Jada felt like giving up. What happened when she kept going?`,
+      optHints:{2:`That could be good advice, but is it what the story is about? Think about what Jada did when she felt like giving up.`}}
+  ],
+  checks:[[
+    {type:`mc`,p:`sandcastle`,q:`What was the problem in the story?`,opts:[`A wave knocked down two towers.`,`They did not have any shells.`,`The judges did not like the wall.`],ans:0,proof:[3,4],
+      hint:`A problem is something that goes wrong. Find where something goes wrong.`},
+    {type:`mc`,p:`sandcastle`,q:`How did Omar and Lina fix the problem?`,opts:[`They built a wall of sand to stop the waves.`,`They moved their castle away from the water.`,`They asked the judges for more time.`],ans:0,proof:[6,7],
+      hint:`Find Omar's idea. What did they build?`},
+    {type:`mc`,p:`sandcastle`,q:`Which part is NOT important to retell?`,opts:[`They added shells for windows.`,`A wave knocked down two towers.`,`They won a prize for their castle.`],ans:0,proof:[8],
+      hint:SMALL,optHints:{1:`The wave is the problem, so it's a big part!`,2:`That's how the story ends, so it's a big part!`}},
+    {type:`mc`,p:`sandcastle`,q:`Which is the BEST retelling of the story?`,opts:[
+      `Omar and Lina built a sandcastle, but a wave knocked down two towers. They built a wall and fixed the towers. They won a prize.`,
+      `Omar and Lina used shells for windows. They dug a deep ditch. Their castle had four tall towers, and the judges came to see it.`,
+      `Omar and Lina won a prize. Then a wave knocked down two of their towers. Then they built a wall of sand and fixed their castle.`],ans:0,proof:[2,4,7,10],
+      hint:`Does it tell the problem, the fix, and the ending, in order?`,
+      optHints:{1:`That one has tiny details. Where is the problem, and how did it get fixed?`,2:`That one has the big events, but is the order right? When did they win the prize?`}},
+    {type:`mc`,p:`sandcastle`,q:`What lesson does the story teach?`,opts:[`Don't give up when something goes wrong.`,`Always build castles far from the water.`,`Shells make the best castle windows.`],ans:0,proof:[5,11],
+      hint:`Read what Lina says at the very end.`,
+      optHints:{1:`That might be smart, but it isn't what the story teaches. What does Lina say at the end?`}}
+  ],[
+    {type:`mc`,p:`lemonade`,q:`What problem did Nia have at her stand?`,opts:[`Nobody stopped to buy lemonade.`,`She ran out of lemons and cups.`,`Her sign blew away in the wind.`],ans:0,proof:[3,4],
+      hint:`Find the words "At first." What went wrong?`},
+    {type:`mc`,p:`lemonade`,q:`How did Nia fix her problem?`,opts:[`She painted a big, bright sign.`,`She made her lemonade sweeter.`,`She moved her stand to the park.`],ans:0,proof:[7,8],
+      hint:`Find Mr. Diaz's idea. What did Nia make?`},
+    {type:`mc`,p:`lemonade`,q:`Which part is NOT important to retell?`,opts:[`Her sign had a yellow lemon on it.`,`Nobody stopped at her stand at first.`,`She bought the space book she wanted.`],ans:0,proof:[8],
+      hint:SMALL,optHints:{1:`That's the problem, so it's a big part!`,2:`That's how the story ends, so it's a big part!`}},
+    {type:`mc`,p:`lemonade`,q:`Which is the BEST retelling of the story?`,opts:[
+      `Nia needed money for a book, so she sold lemonade. Nobody stopped until she made a bright sign. Then she sold lots and bought the book.`,
+      `Nia's sign had a yellow lemon on it. Cars zoomed by her house. Mr. Diaz is her neighbor, and she sold twenty cups of lemonade.`,
+      `Nia bought her new space book at the store. Then she painted a big, bright sign. Then she set up a stand, but nobody stopped.`],ans:0,proof:[2,3,8,11],
+      hint:`Does it tell why Nia needed money, her problem, and how she fixed it, in order?`,
+      optHints:{1:`Those are tiny details. It skips why Nia needed money and how she fixed her problem.`,2:`Those are big events, but the order is backwards. What did Nia do first?`}},
+    {type:`mc`,p:`lemonade`,q:`What lesson does the story teach?`,opts:[`Don't give up, and listen to good advice.`,`Selling lemonade is always very easy.`,`It is always best to work by yourself.`],ans:0,proof:[5,6,9],
+      hint:`Nia felt like giving up. What helped her?`,
+      optHints:{1:`Look back. Was it easy at first?`,2:`Look back. Did Nia do it all by herself?`}}
+  ]]
+},
+{
+  id:`paragraphs`, title:`Paragraph Boss`, skill:`MobyMax: Main ideas of paragraphs · Supporting details within paragraphs · Recount informational text`,
+  after:`Now try it in MobyMax: Identify main ideas of paragraphs, then Identify supporting details within paragraphs. Find the boss, then the helpers.`,
+  learnSay:`Every paragraph has a boss idea. That is the main idea. It is what all the sentences are about. The other sentences are helpers. They tell more about the boss. Dogs make great pets. They love to play. They keep you company. They can learn tricks. The boss is: dogs make great pets. The helpers are: they play, they keep you company, they learn tricks. The umbrella test: does the answer cover every sentence? If it fits only one sentence, it is a helper. Sometimes the boss idea is not written down. Then put the helpers together to find it. To recount a fact text, tell the boss idea of each paragraph, in order.`,
+  learn:`
+    <p class="lead">Every paragraph has a <b>boss idea</b>. That is the main idea. It is what <i>all</i> the sentences are about. The other sentences are <b>helpers</b>. They tell more about the boss.</p>
+    <div class="ex"><div class="ex-l">Example</div>
+      <p><mark>Dogs make great pets.</mark> They love to play. They keep you company. They can learn tricks.</p>
+      <p>Boss: <b>Dogs make great pets.</b> Helpers: they play, they keep you company, they learn tricks.</p></div>
+    <div class="tip"><b>The umbrella test:</b> Does the answer cover every sentence? If it fits only one sentence, it is a helper.</div>
+    <p>Sometimes the boss idea is not written down. Then put the helpers together to find it.</p>
+    <p>To <b>recount</b> a fact text, tell the boss idea of each paragraph, in order.</p>`,
+  guided:[
+    {type:`mc`,p:`penguins`,q:`What is the main idea of this paragraph?`,opts:[`Penguins' bodies are made for cold water.`,`Penguins have thick feathers to stay dry.`,`Penguins use their wings to swim fast.`],ans:0,proof:[0],
+      hint:`Try the umbrella test. Does the answer cover EVERY sentence, or just one?`,optHints:{1:HELPER,2:HELPER},
+      why:`Feathers, fat, and flippers all fit under one umbrella: made for cold water.`},
+    {type:`tap`,p:`penguins`,q:`Tap a helper sentence that tells how penguins stay warm.`,ans:[1,2],proof:[1,2],
+      near:{0:`That's the boss sentence! Find a helper that tells HOW they stay warm.`},
+      hint:`That helper is about swimming. Find one about staying warm.`},
+    {type:`mc`,p:`recess`,q:`This paragraph has no boss sentence. What is its main idea?`,opts:[`Kids do many things at recess.`,`Some kids jump rope by the fence.`,`Recess is the best part of the day.`],ans:0,proof:[0,1,2,3],
+      hint:`Put the helpers together. What are ALL the sentences about?`,
+      optHints:{1:HELPER,2:`The paragraph never says that. What are ALL the sentences about?`},
+      why:`Racing, climbing, jumping rope, and tag all fit under one umbrella: kids do lots of things at recess.`},
+    {type:`mc`,p:`honey`,q:`Which is the BEST recount of this text?`,opts:[
+      `Bees drink nectar and bring it to the hive. They put it in wax cells, fan it until it is thick, and cover it with wax lids.`,
+      `Bees have wings and a special honey stomach. Honey is thick, sticky, and sweet. It can stay good for a very long time.`,
+      `Bees cover the cells with wax lids. Then they fan the nectar with their wings. Then they drink nectar from flowers.`],ans:0,proof:[1,3,5,6],
+      hint:`A good recount tells the big steps, in order.`,
+      optHints:{1:`Those are true facts, but they don't tell how honey is made, step by step.`,2:`Those are the right steps, but the order is backwards. What happens first?`}}
+  ],
+  checks:[[
+    {type:`mc`,p:`beavers`,q:`What is the main idea of paragraph 1?`,opts:[`Beavers are very good at building.`,`Beavers cut trees with their teeth.`,`A dam makes a quiet pond.`],ans:0,proof:[0],
+      hint:`Which answer covers ALL the sentences in paragraph 1?`,optHints:{1:HELPER,2:HELPER}},
+    {type:`mc`,p:`beavers`,q:`What is the main idea of paragraph 3?`,opts:[`Beavers build safe homes called lodges.`,`Wolves cannot get through the underwater door.`,`Beavers are made for swimming.`],ans:0,proof:[8],
+      hint:`Use the umbrella test on paragraph 3.`,optHints:{1:HELPER,2:`That's the boss of a different paragraph. Look at paragraph 3.`}},
+    {type:`mc`,p:`beavers`,q:`Which helper supports the main idea of paragraph 2?`,opts:[`Their flat tail helps them steer in the water.`,`The dam holds back the water and makes a pond.`,`Inside, there is a dry room where the family sleeps.`],ans:0,proof:[6],
+      hint:`Paragraph 2 is about swimming. Which helper tells about swimming?`},
+    {type:`tap`,p:`beavers`,q:`Tap a helper sentence that tells how the lodge keeps beavers safe.`,ans:[9],proof:[9],
+      near:{8:`That's the boss sentence of paragraph 3. Find a helper that tells how the lodge keeps them safe.`,
+            10:`That's a helper about the lodge! But is it about staying SAFE?`},
+      hint:`That sentence is true, but does it tell how the lodge keeps beavers SAFE?`},
+    {type:`mc`,p:`beavers`,q:`Which is the BEST recount of the whole text?`,opts:[
+      `Beavers build dams that make ponds. Their feet and tails help them swim. They live in safe lodges with underwater doors.`,
+      `Beavers have strong front teeth. They can stay underwater for up to fifteen minutes. Wolves are one of their enemies.`,
+      `Beavers are good swimmers. Their back feet are webbed like a duck's, and their flat tails help them steer in the water.`],ans:0,proof:[0,4,8],
+      hint:`A good recount covers the boss idea of every paragraph.`,
+      optHints:{1:`Those are tiny details. They skip the boss ideas.`,2:`That only tells about paragraph 2. A recount covers the whole text.`}}
+  ],[
+    {type:`mc`,p:`camels`,q:`What is the main idea of paragraph 1?`,opts:[`Camels have bodies made for the desert.`,`Camels have thick eyelashes to block sand.`,`Camels can close their noses to keep out sand.`],ans:0,proof:[0],
+      hint:`Which answer covers ALL the sentences in paragraph 1?`,optHints:{1:HELPER,2:HELPER}},
+    {type:`mc`,p:`camels`,q:`Paragraph 3 has no boss sentence. What is its main idea?`,opts:[`Camels help people in many ways.`,`Some families drink camel milk.`,`Camels can go a long time without water.`],ans:0,proof:[8,9,10],
+      hint:`Put the helpers in paragraph 3 together. What are they all about?`,
+      optHints:{1:HELPER,2:`That's the boss of a different paragraph. Look at paragraph 3.`}},
+    {type:`mc`,p:`camels`,q:`Which helper tells how camels can go without food?`,opts:[`Their humps store fat, not water.`,`Their wide, flat feet help them walk on sand.`,`Camels carry heavy bags across the desert.`],ans:0,proof:[6,7],
+      hint:`Look in paragraph 2. Which helper is about what gives camels energy?`},
+    {type:`tap`,p:`camels`,q:`Tap a helper sentence that tells how camels keep sand out.`,ans:[1,2],proof:[1,2],
+      near:{0:`That's the boss sentence! Find a helper that tells HOW camels keep sand out.`,
+            3:`That helper is about walking on sand. Find one about keeping sand OUT.`},
+      hint:`That sentence is true, but is it about keeping sand out?`},
+    {type:`mc`,p:`camels`,q:`Which is the BEST recount of the whole text?`,opts:[
+      `Camels are built for the desert. They can go a long time without food or water. They also help people in many ways.`,
+      `Camels have thick eyelashes. Their humps store fat. Some families drink camel milk, and others make blankets from camel hair.`,
+      `Camels can drink a huge amount of water very fast. Their humps store fat that gives them energy when there is no food.`],ans:0,proof:[0,4],
+      hint:`A good recount covers the boss idea of every paragraph.`,
+      optHints:{1:`Those are tiny details. They skip the boss ideas.`,2:`That only tells about paragraph 2. A recount covers the whole text.`}}
+  ]]
+},
+{
+  id:`characters`, title:`Character Clues`, skill:`MobyMax: Describe characters based on their traits and feelings`,
+  after:`Now try it in MobyMax: Describe characters based on their traits and feelings. Ask: right now, or most of the time?`,
+  learnSay:`There are two kinds of character words. A feeling is how they feel right now. It can change fast. Nervous, sorry, happy. A trait is what they are like most of the time. Kind, brave, honest. Find clues in what a character does, says, and looks like. Omar gave half of his sandwich to a new kid who forgot lunch. What Omar did shows his trait: kind.`,
+  learn:`
+    <p class="lead">There are two kinds of character words.</p>
+    <div class="duo">
+      <div><h3>Feeling</h3><p>How they feel <b>right now</b>. It can change fast.</p><p class="w">nervous, sorry, happy</p></div>
+      <div><h3>Trait</h3><p>What they are like <b>most of the time</b>.</p><p class="w">kind, brave, honest</p></div>
+    </div>
+    <p>Find clues in what a character <b>does</b>, <b>says</b>, and <b>looks like</b>.</p>
+    <div class="ex"><div class="ex-l">Example</div>
+      <p><mark>Omar gave half of his sandwich to a new kid who forgot lunch.</mark></p>
+      <p>What Omar <b>did</b> shows his trait: <b>kind</b>.</p></div>`,
+  guided:[
+    {type:`mc`,p:`spelling`,q:`How did Nora feel at the start?`,opts:[`Nervous`,`Proud`,`Bored`],ans:0,proof:[0,1],point:true,
+      hint:`Look at the first two sentences. What were her hands and voice doing?`},
+    {type:`mc`,p:`spelling`,q:`What is Nora like most of the time? Look at what she does at the end.`,opts:[`Kind`,`Nervous`,`Bossy`],ans:0,proof:[7],point:true,
+      hint:`What did Nora do for the boy who was crying?`,
+      optHints:{1:`Nora felt nervous for a little while. That's a feeling. What is she like most of the time?`}},
+    {type:`mc`,p:`spelling`,q:`Nora was nervous at the start. Is "nervous" a feeling or a trait for Nora?`,opts:[`A feeling. It went away when she smiled.`,`A trait. She is nervous all the time.`],ans:0,proof:[0,5],
+      hint:`Look at Nora's face after she spelled the word. Did the nervous feeling stay?`}
+  ],
+  checks:[[
+    {type:`mc`,p:`garden`,q:`Which word tells what Mr. Finn is like most of the time?`,opts:[`Hardworking`,`Upset`,`Forgetful`],ans:0,proof:[1],
+      hint:`Find what Mr. Finn does every morning.`,
+      optHints:{1:`Mr. Finn was upset for a little while. That's a feeling. What is he like most of the time?`}},
+    {type:`mc`,p:`garden`,q:`How did Theo feel when he walked next door?`,opts:[`Embarrassed`,`Proud`,`Honest`],ans:0,proof:[5],
+      hint:`Look at Theo's face when he walked next door.`,
+      optHints:{2:`Theo IS honest, but that's a trait. The question asks how he FELT.`}},
+    {type:`mc`,p:`garden`,q:`Theo told the truth about the ball. What trait does that show?`,opts:[`Honest`,`Sorry`,`Sneaky`],ans:0,proof:[5,6,8],
+      hint:`Look at what Mr. Finn thanks Theo for.`,
+      optHints:{1:`Theo did feel sorry, but that's a feeling. The question asks for a trait.`}},
+    {type:`tap`,p:`garden`,q:`Tap the sentence that shows Mr. Finn was upset at first.`,ans:[7],proof:[7],
+      hint:`Look for what Mr. Finn's face did when he saw the plant.`},
+    {type:`mc`,p:`garden`,q:`What happened because Theo told the truth?`,opts:[`Mr. Finn asked Theo to help him plant a new one.`,`Mr. Finn told Theo to stay out of his garden.`,`Theo had to pay for the broken tomato plant.`],ans:0,proof:[8,9],
+      hint:`Read what Mr. Finn says after he thanks Theo.`}
+  ],[
+    {type:`mc`,p:`newkid`,q:`How did Priya feel at the start of the story?`,opts:[`Lonely`,`Excited`,`Bossy`],ans:0,proof:[1,2],
+      hint:`Look at what Priya did with her backpack and at lunch.`,
+      optHints:{2:`Bossy is a trait, and nothing in the story shows it. How did Priya FEEL?`}},
+    {type:`mc`,p:`newkid`,q:`Which word tells what Carlos is like?`,opts:[`Kind`,`Lonely`,`Fast`],ans:0,proof:[3,4,5],
+      hint:`Look at what Carlos does when he sees Priya.`,
+      optHints:{1:`That's how Priya felt, not Carlos.`,2:`Priya is the fast one. What is Carlos like?`}},
+    {type:`tap`,p:`newkid`,q:`Tap a sentence that shows Priya started to feel better.`,ans:[6,9],proof:[6,9],
+      near:{10:`That's true by the end of the week! Find an earlier clue on Priya's face.`},
+      hint:`That sentence is true, but does it show how Priya felt?`},
+    {type:`mc`,p:`newkid`,q:`What happened because Carlos asked Priya to play?`,opts:[`Priya played tag and made new friends.`,`Priya went back to sit by herself.`,`Carlos won the game of tag.`],ans:0,proof:[7,9,10],
+      hint:`Read what happened at recess and by the end of the week.`},
+    {type:`mc`,p:`newkid`,q:`How did Priya's feelings change?`,opts:[`She felt lonely, then happy.`,`She felt happy, then lonely.`,`She felt angry, then scared.`],ans:0,proof:[2,9],
+      hint:`How did Priya feel at lunch? How did she feel at recess?`}
+  ]]
+}
+];
+
+/* ---------- state ---------- */
+const KEY = `lucy-reading-detective-v1`;
+let prog = {};
+try { prog = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { prog = {}; }
+if (!prog.tries) prog.tries = {};
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(prog)); } catch (e) {} }
+/* Opening the link with #preview unlocks every case, for adults reviewing the content. */
+const preview = () => location.hash === `#preview`;
+const unlocked = i => i === 0 || preview() || (prog[LESSONS[i-1].id] || 0) > 0;
+
+let S = { view:`home` };
+const app = document.getElementById(`app`);
+const canSpeak = `speechSynthesis` in window;
+
+function speak(text){
+  if (!canSpeak) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.rate = 0.88; speechSynthesis.speak(u); } catch (e) {}
+}
+function shuffle(a){ a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function shuffleMC(q){
+  if (q.type !== `mc`) return q;
+  const order = shuffle(q.opts.map((_, i) => i));
+  const optHints = {};
+  if (q.optHints) order.forEach((orig, i) => { if (q.optHints[orig]) optHints[i] = q.optHints[orig]; });
+  return { ...q, opts: order.map(i => q.opts[i]), ans: order.indexOf(q.ans), optHints };
+}
+const esc = s => String(s).replace(/&/g,`&amp;`).replace(/</g,`&lt;`).replace(/>/g,`&gt;`);
+const attr = s => esc(s).replace(/"/g,`&quot;`);
+const plain = html => html.replace(/<[^>]+>/g, ` `).replace(/\s+/g, ` `).trim();
+
+const STAR = on => `<svg viewBox="0 0 24 24" aria-hidden="true"><path class="${on ? `star-on` : `star-off`}" d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z"/></svg>`;
+const stars = (n, cls = `stars`) => `<span class="${cls}" aria-label="${n} of 3 stars">${STAR(n>=1)}${STAR(n>=2)}${STAR(n>=3)}</span>`;
+const SPEAKER = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4zM16 8.5a4.5 4.5 0 0 1 0 7M18.5 6a8 8 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M4 9h4l5-4v14l-5-4H4z"/></svg>`;
+const MAG = `<svg class="mag" viewBox="0 0 64 64" aria-hidden="true"><circle cx="26" cy="26" r="17" fill="var(--hl)" stroke="var(--ink)" stroke-width="5"/><path d="M38.5 38.5 56 56" stroke="var(--ink)" stroke-width="8" stroke-linecap="round"/><path d="M17 22a10 10 0 0 1 8-7" stroke="var(--paper)" stroke-width="4" stroke-linecap="round" fill="none"/></svg>`;
+const listenBtn = text => canSpeak ? `<button class="listen" data-act="say" data-text="${attr(text)}">${SPEAKER}Listen</button>` : ``;
+
+/* ---------- views ---------- */
+function renderHome(){
+  const rows = LESSONS.map((l, i) => {
+    const st = prog[l.id] || 0, open = unlocked(i);
+    return `<li><button class="case ${st ? `solved` : ``}" data-act="open" data-i="${i}" ${open ? `` : `disabled`}>
+      <span class="n">${i+1}</span>
+      <span><span class="t">${l.title}</span><br><span class="sk">${l.skill}</span></span>
+      ${open ? stars(st) : `<span class="sk">Locked</span>`}
+    </button></li>`;
+  }).join(``);
+  app.innerHTML = `
+    <header class="top">${MAG}<div><h1>Lucy's Reading Detective</h1>
+      <p>Five short cases. Each one practices a tricky MobyMax lesson. Get 4 out of 5 in the check to earn stars and open the next case.</p></div></header>
+    <ol class="trail">${rows}</ol>`;
+}
+
+function lessonBar(){
+  const l = LESSONS[S.li], ph = [`learn`,`guided`,`check`];
+  const idx = S.phase === `ready` ? 2 : S.phase === `result` ? 3 : ph.indexOf(S.phase);
+  const labels = [`Learn the trick`,`Practice together`,`Check`];
+  return `<div class="bar"><button class="back" data-act="home">← All cases</button>
+    <div class="steps">${labels.map((t, i) => `<span class="${i === idx ? `on` : i < idx ? `past` : ``}">${t}</span>`).join(``)}</div></div>
+    <div class="lhead"><h2>Case ${S.li+1}: ${l.title}</h2><p class="sk">${l.skill}</p></div>`;
+}
+
+function renderLearn(){
+  const l = LESSONS[S.li];
+  app.innerHTML = lessonBar() + `<div class="card learn pop"><div class="lrow">${listenBtn(l.learnSay)}</div>${l.learn}
+    <div class="go"><button class="btn" data-act="toGuided">Let's practice</button></div></div>`;
+}
+
+function renderReady(){
+  app.innerHTML = lessonBar() + `<div class="card center pop">
+    <h3>Case check: 5 questions</h3>
+    <p class="stat">Remember: <b>peek</b> at the question, <b>read</b>, then <b>point</b> to the proof with your finger.</p>
+    <p>This story is longer. Get 4 right on the first try to close the case.</p>
+    <button class="btn" data-act="startCheck">Start the check</button></div>`;
+}
+
+function passageHTML(P, q){
+  let n = 0;
+  const hl = new Set(S.done ? q.proof || [] : []);
+  const tappable = !S.done && (q.type === `tap` || S.pointing);
+  const numbered = P.paras.length > 1;
+  const paras = P.paras.map((para, pi) => `<p>${numbered ? `<span class="pn" aria-label="Paragraph ${pi+1}">${pi+1}</span>` : ``}${para.map(s => {
+    const i = n++;
+    const cls = [`s`];
+    let live = false;
+    if (hl.has(i) || (S.found && S.found.includes(i))) cls.push(`hl`);
+    else if (S.tapWrong.has(i)) cls.push(`no`);
+    else if (S.tapNear.has(i)) cls.push(`near`);
+    else if (tappable) { cls.push(i === S.sel ? `sel` : `tap`); live = true; }
+    const attrs = live ? ` role="button" tabindex="0" aria-pressed="${i === S.sel}" data-act="tapS" data-s="${i}"` : ``;
+    return `<span class="${cls.join(` `)}"${attrs}>${esc(s)}</span>`;
+  }).join(` `)}</p>`).join(``);
+  const audio = S.phase === `check` ? `` : listenBtn(P.title + `. ` + P.paras.flat().join(` `));
+  const confirm = tappable && S.sel !== null
+    ? `<div class="confirm"><button class="btn" data-act="confirmS">This is my proof</button><span class="sk">or tap a different sentence</span></div>` : ``;
+  return `<section class="passage"><div class="phead"><h3>${P.title}</h3>${audio}</div>
+    <div class="ptext">${paras}</div>${confirm}</section>`;
+}
+
+function currentList(){ return S.phase === `guided` ? S.guidedQs : S.checkQs; }
+
+function renderQuestion(){
+  const list = currentList();
+  const q = list[S.qi], P = PASSAGES[q.p];
+  const meta = S.phase === `guided`
+    ? `<div class="qmeta"><span>Practice together · ${S.qi+1} of ${list.length}</span></div>`
+    : `<div class="qmeta"><span>Question ${S.qi+1} of ${list.length}</span><span class="dots">${list.map((_, i) =>
+        `<i class="${i < S.qi ? (S.marks[i] ? `ok` : `miss`) : i === S.qi ? `cur` : ``}"></i>`).join(``)}</span></div>`;
+
+  const qtext = q.concl
+    ? `<div class="qtext">${esc(q.ask)}<span class="concl">Conclusion: ${esc(q.q)}</span></div>`
+    : `<div class="qtext">${esc(q.q)}${q.ask ? `<br>${esc(q.ask)}` : ``}</div>`;
+  const extra = q.opts ? q.opts : q.items ? q.items : [];
+  const sayText = (q.concl ? q.ask + ` Conclusion: ` + q.q : q.q + (q.ask ? ` ` + q.ask : ``)) + (extra.length ? ` ` + extra.join(`. `) : ``);
+
+  let body = ``;
+  if (q.type === `mc`) {
+    const waiting = S.pointing;
+    body = `${waiting ? `<p class="step">Step 1: Find your proof in the story. Step 2: Choose.</p>` : ``}
+      <div class="opts ${waiting ? `wait` : ``}">${q.opts.map((o, i) => {
+      const cls = S.answered && i === q.ans ? `right` : S.wrongOpts.has(i) ? `wrong` : ``;
+      const dis = waiting || S.answered || S.wrongOpts.has(i) ? `disabled` : ``;
+      return `<button class="opt ${cls}" data-act="opt" data-o="${i}" ${dis}>${esc(o)}</button>`;
+    }).join(``)}</div>`;
+  } else if (q.type === `tap`) {
+    body = S.done ? `` : `<p class="sk">Tap a sentence in the story, then tap "This is my proof."</p>`;
+  } else if (q.type === `order`) {
+    const picked = S.picked, full = picked.length === q.items.length;
+    body = `<div class="slots">${q.items.map((_, k) => {
+      const it = picked[k];
+      return `<div class="slot ${it !== undefined ? (S.done ? `right` : `full`) : ``}">${it !== undefined ? esc(q.items[it]) : ``}</div>`;
+    }).join(``)}</div>
+    ${S.done || (full && S.orderWrong) ? `` : `<div class="chips">${S.shuf.map(it =>
+      `<button class="chip" data-act="chip" data-c="${it}" ${picked.includes(it) ? `disabled` : ``}>${esc(q.items[it])}</button>`).join(``)}</div>`}
+    ${S.orderWrong && !S.done ? `<button class="btn ghost small" data-act="orderRetry">Try the order again</button>` : ``}`;
+  }
+
+  const fb = S.fb ? `<div class="fb ${S.fb.kind} pop"><div>${S.fb.html}</div>${listenBtn(plain(S.fb.html))}</div>` : ``;
+  const next = S.done ? `<button class="btn" data-act="next">${S.qi + 1 < list.length ? `Next` : S.phase === `guided` ? `On to the check` : `See my score`}</button>` : ``;
+
+  app.innerHTML = lessonBar() + `<div class="qa">
+    <section class="question" aria-live="polite">${meta}
+      <div class="phead">${qtext}${listenBtn(sayText)}</div>
+      ${body}${fb}${next}</section>
+    ${passageHTML(P, q)}</div>`;
+}
+
+function renderResult(){
+  const l = LESSONS[S.li], sc = S.score, pass = sc >= 4;
+  const st = sc === 5 ? 3 : sc === 4 ? 2 : 0;
+  const secs = Math.round((Date.now() - S.t0) / 1000);
+  const time = `${Math.floor(secs / 60)} min ${secs % 60} sec`;
+  const nextOpen = S.li + 1 < LESSONS.length;
+  const tries = prog.tries[l.id] || 0;
+  const withGuide = tries >= l.checks.length;
+  app.innerHTML = lessonBar() + `<div class="card center pop">
+    ${pass ? `<h3>Case closed!</h3>${stars(st, `big-stars`)}` : `<h3>${sc >= 3 ? `So close!` : `Let's look at the clues again.`}</h3>`}
+    <p class="stat">You got <span class="num">${sc} of 5</span> on the first try, in <span class="num">${time}</span>.</p>
+    ${pass
+      ? `<p>${esc(l.after)}</p>
+         <div class="go">${nextOpen ? `<button class="btn" data-act="open" data-i="${S.li+1}">Next case</button>` : ``}
+         <button class="btn ghost" data-act="home">All cases</button></div>`
+      : `<p>You need 4 to close the case. ${withGuide ? `Ask your guide to sit with you for the next check.` : `The next check has a new story.`}</p>
+         <div class="go"><button class="btn" data-act="startCheck">Try a new check</button>
+         <button class="btn ghost" data-act="toLearn">Review the trick</button></div>`}
+  </div>`;
+}
+
+function render(){
+  if (S.view === `home`) return renderHome();
+  if (S.phase === `learn`) return renderLearn();
+  if (S.phase === `ready`) return renderReady();
+  if (S.phase === `result`) return renderResult();
+  return renderQuestion();
+}
+
+/* ---------- flow ---------- */
+function currentQ(){
+  if (S.phase === `guided` || S.phase === `check`) return currentList()[S.qi];
+  return null;
+}
+function resetQ(){
+  const q = currentQ();
+  S.answered = false; S.done = false; S.first = true; S.found = null; S.sel = null;
+  S.pointing = !!(q && S.phase === `guided` && q.point);
+  S.wrongOpts = new Set(); S.tapWrong = new Set(); S.tapNear = new Set(); S.picked = []; S.orderWrong = false;
+  S.fb = S.pointing ? { kind:`info`, html:`<b>Point first!</b> Tap the sentence in the story that answers the question.` } : null;
+  if (q && q.type === `order`) { let sh; do { sh = shuffle(q.items.map((_, i) => i)); } while (sh.every((v, i) => v === i)); S.shuf = sh; }
+}
+function finishQ(msg){
+  S.done = true; S.pointing = false; S.sel = null;
+  if (S.phase === `check`) { S.marks[S.qi] = S.first; if (S.first) S.score++; }
+  S.fb = { kind:`good`, html: msg };
+}
+const PRAISE = [`Yes!`,`You got it!`,`Great detective work!`,`Correct!`];
+const praise = () => `<b>${PRAISE[Math.floor(Math.random() * PRAISE.length)]}</b>`;
+
+function onOpt(i){
+  const q = currentQ();
+  if (S.pointing) return;
+  if (i === q.ans) {
+    S.answered = true;
+    finishQ(`${praise()} ${q.why ? esc(q.why) : `The yellow part of the story is the proof.`}`);
+  } else {
+    S.first = false; S.wrongOpts.add(i);
+    S.fb = { kind:`oops`, html:`<b>Not quite.</b> ${esc((q.optHints && q.optHints[i]) || q.hint)}` };
+  }
+  render();
+}
+function onConfirm(){
+  const q = currentQ(), i = S.sel;
+  if (i === null) return;
+  S.sel = null;
+  if (S.pointing) {
+    if (q.proof.includes(i)) {
+      S.pointing = false; S.found = [i];
+      S.fb = { kind:`good`, html:`<b>That's your proof!</b> Now choose the answer.` };
+    } else {
+      S.tapWrong.add(i);
+      S.fb = { kind:`oops`, html:`<b>Look again.</b> That sentence is in the story, but does it answer the question? ${esc(q.hint)}` };
+    }
+  } else if (q.ans.includes(i)) {
+    S.found = [i];
+    finishQ(`${praise()} That sentence proves it.`);
+  } else if (q.near && q.near[i]) {
+    S.first = false; S.tapNear.add(i);
+    S.fb = { kind:`info`, html:`<b>Close!</b> ${esc(q.near[i])}` };
+  } else {
+    S.first = false; S.tapWrong.add(i);
+    S.fb = { kind:`oops`, html:`<b>Look again.</b> ${esc(q.hint)}` };
+  }
+  render();
+}
+function onChip(c){
+  const q = currentQ();
+  S.picked.push(c);
+  if (S.picked.length === q.items.length) {
+    if (S.picked.every((v, k) => v === k)) finishQ(`${praise()} That's the right order. The yellow sentences show each step.`);
+    else { S.first = false; S.orderWrong = true; S.fb = { kind:`oops`, html:`<b>Not quite.</b> ${esc(q.hint)}` }; }
+  }
+  render();
+}
+app.addEventListener(`click`, e => {
+  const t = e.target.closest(`[data-act]`); if (!t) return;
+  const a = t.dataset.act;
+  if (a === `open`) { S = { view:`lesson`, li:+t.dataset.i, phase:`learn` }; window.scrollTo(0,0); }
+  else if (a === `home`) { S = { view:`home` }; }
+  else if (a === `toLearn`) { S.phase = `learn`; }
+  else if (a === `toGuided`) { S.phase = `guided`; S.qi = 0; S.guidedQs = LESSONS[S.li].guided.map(shuffleMC); resetQ(); }
+  else if (a === `startCheck`) {
+    const l = LESSONS[S.li];
+    const n = prog.tries[l.id] || 0;
+    prog.tries[l.id] = n + 1; save();
+    S.phase = `check`; S.qi = 0; S.score = 0; S.marks = []; S.t0 = Date.now();
+    S.checkQs = l.checks[n % l.checks.length].map(shuffleMC); resetQ();
+  }
+  else if (a === `opt`) return onOpt(+t.dataset.o);
+  else if (a === `tapS`) { S.sel = +t.dataset.s; }
+  else if (a === `confirmS`) return onConfirm();
+  else if (a === `chip`) return onChip(+t.dataset.c);
+  else if (a === `orderRetry`) { S.picked = []; S.orderWrong = false; S.fb = null; }
+  else if (a === `say`) { speak(t.dataset.text); return; }
+  else if (a === `next`) {
+    const list = currentList();
+    if (S.qi + 1 < list.length) { S.qi++; resetQ(); }
+    else if (S.phase === `guided`) { S.phase = `ready`; }
+    else {
+      S.phase = `result`;
+      const st = S.score === 5 ? 3 : S.score === 4 ? 2 : 0;
+      const id = LESSONS[S.li].id;
+      if (st > (prog[id] || 0)) { prog[id] = st; save(); }
+    }
+    window.scrollTo(0,0);
+  }
+  render();
+});
+app.addEventListener(`keydown`, e => {
+  if ((e.key === `Enter` || e.key === ` `) && e.target.matches(`[data-act="tapS"]`)) {
+    e.preventDefault(); S.sel = +e.target.dataset.s; render();
+    const btn = app.querySelector(`[data-act="confirmS"]`); if (btn) btn.focus();
+  }
+});
+window.addEventListener(`hashchange`, () => { if (S.view === `home`) render(); });
+
+render();
+</script>
+
+</html>
